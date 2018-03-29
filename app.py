@@ -18,9 +18,9 @@ sample = {
 }
 
 
-@app.route('/')
-def api_root():
-    return "The service calculates housing price prediction based on area data."
+#@app.route('/')
+#def api_root():
+#    return "The service calculates housing price prediction based on area data."
 
 @app.route('/')
 def home():
@@ -41,21 +41,27 @@ def api_predict():
 
     y = Housing['house_value']
     X = Housing[features]
-        
+
+    pre_values = pd.DataFrame(X.iloc[0:1])
+
+    result=request.form
+    if (result):
+        for value in features:
+            pre_values[value] = float(result[value])
+        print(pre_values)    
+    else :    
     # Use 'force' to skip mimetype checking to have shorter curl command.
 #    print("Getting json input...")
-    try:
-        data = request.get_json(force=True)
-#        print(data)    
-        # Use same DF shape
-        pre_values = pd.DataFrame(X.iloc[0:1])
-#        pre_values = pd.DataFrame(sample)
-#        print(pre_values)
-        for value in features:
-            pre_values[value] = float(data[value])
+      try:
+          data = request.get_json(force=True)
+          # Use same DF shape
+#          pre_values = pd.DataFrame(sample)
+#          print(pre_values)
+          for value in features:
+              pre_values[value] = float(data[value])
 
-    except (KeyError, TypeError, ValueError):
-        raise JsonError(description='Invalid value.')
+      except (KeyError, TypeError, ValueError):
+          raise JsonError(description='Invalid value.')
 
 #    print("Loading model...")
     # Load generated model
