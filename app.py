@@ -32,7 +32,7 @@ def api_predict():
     if request.method == 'GET':
         return("Usage, e.g: curl http://localhost:5000/predict -d " + str(sample))
 
-    Housing=pd.read_csv('../housing/housing.csv')
+    Housing=pd.read_csv('housing.csv')
     features = ['crime_rate', 'avg_number_of_rooms','distance_to_employment_centers', 'property_tax_rate','pupil_teacher_ratio']
 
     y = Housing['house_value']
@@ -55,7 +55,7 @@ def api_predict():
 
 #    print("Loading model...")
     # Load generated model
-    pkl_file = open('../reg_model.pkl', 'rb')
+    pkl_file = open('reg_model.pkl', 'rb')
     regressor = pickle.load(pkl_file)
     result = (float) (regressor.predict(pre_values))
 
