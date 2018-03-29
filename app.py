@@ -22,6 +22,10 @@ sample = {
 def api_root():
     return "The service calculates housing price prediction based on area data."
 
+@app.route('/')
+def home():
+  return render_template('home.html')
+
 @app.route('/help')
 def api_help():
     return "Usage, e.g: curl http://<server name>/predict -d <JSON-data>"
@@ -69,6 +73,8 @@ def api_predict():
     stddev = find_closest.std()
 #    print("Stddev: " + str(stddev))
              
+    render_template('result.html',house_value = result, stddev = stddev)
+
     return json_response(house_value = result, stddev = stddev)
 
        
