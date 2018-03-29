@@ -20,11 +20,11 @@ sample = {
 
 @app.route('/')
 def api_root():
-    return 'The service calculates housing price prediction based on area data.'
+    return "The service calculates housing price prediction based on area data."
 
 @app.route('/help')
 def api_help():
-    return 'Usage, e.g: curl http://<server name>/predict -d <JSON-data>'
+    return "Usage, e.g: curl http://<server name>/predict -d <JSON-data>"
 
 @app.route('/predict', methods = ['GET', 'POST'])
 def api_predict():
