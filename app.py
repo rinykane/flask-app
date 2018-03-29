@@ -24,13 +24,13 @@ def api_root():
 
 @app.route('/help')
 def api_help():
-    return 'Usage, e.g: curl http://<URL>/predict -d <JSON-data>'
+    return 'Usage, e.g: curl http://<server name>/predict -d <JSON-data>'
 
 @app.route('/predict', methods = ['GET', 'POST'])
 def api_predict():
     # Give an advice
     if request.method == 'GET':
-        return("Usage, e.g: curl http://<URL>/predict -d " + str(sample))
+        return("Usage, e.g: curl http://<server name>/predict -d " + str(sample))
 
     Housing=pd.read_csv('housing.csv')
     features = ['crime_rate', 'avg_number_of_rooms','distance_to_employment_centers', 'property_tax_rate','pupil_teacher_ratio']
