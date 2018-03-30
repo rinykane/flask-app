@@ -15,6 +15,12 @@ sample = {
   "distance_to_employment_centers": 6.5,
   "property_tax_rate": 330.0,
   "pupil_teacher_ratio": 19.5
+},{
+  "crime_rate": 0.2,
+  "avg_number_of_rooms": 5.0,
+  "distance_to_employment_centers": 7.5,
+  "property_tax_rate": 300.0,
+  "pupil_teacher_ratio": 31.5
 }
 
 
@@ -24,16 +30,24 @@ sample = {
 
 @app.route('/')
 def home():
-  return render_template('home.html')
+    if (request.headers["User-Agent"].count("curl")):
+        return "Usage, e.g: curl http://<server name>/predict -d <JSON-data>"
+    else:
+      return render_template('home.html')
 
 @app.route('/help')
 def api_help():
-    return "Usage, e.g: curl http://<server name>/predict -d <JSON-data>"
+    if (request.headers["User-Agent"].count("curl")):
+      return "Usage, e.g: curl http://<server name>/predict -d <JSON-data>"
+    else:
+      return render_template('home.html')
 
 @app.route('/predict', methods = ['GET', 'POST'])
 def api_predict():
+    curl_agent = request.headers["User-Agent"].count("curl")
+    
     # Give an advice
-    if request.method == 'GET':
+    if request.method == 'GET' and curl_agent:
         return("Usage, e.g: curl http://<server name>/predict -d " + str(sample))
 
     Housing=pd.read_csv('housing.csv')
@@ -43,9 +57,10 @@ def api_predict():
     X = Housing[features]
 
     pre_values = pd.DataFrame(X.iloc[0:1])
+#    pre_values = pd.DataFrame(sample[0:1])
 
-    result=request.form
-    if (result):
+    if (not curl_agent):
+        result=request.form
         for value in features:
             pre_values[value] = float(result[value])
         print(pre_values)    
@@ -78,10 +93,12 @@ def api_predict():
 #    print(find_closest)
     stddev = find_closest.std()
 #    print("Stddev: " + str(stddev))
-             
-    render_template('result.html',house_value = result, stddev = stddev)
+    
+    if curl_agent : 
+      return json_response(house_value = result, stddev = stddev)
+    else :
+      return render_template('result.html',house_value = result, stddev = stddev)
 
-    return json_response(house_value = result, stddev = stddev)
 
        
 if __name__ == '__main__':
