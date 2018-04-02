@@ -1,8 +1,32 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+"""
+Housing price prediction - estimates house value based on input values
+
+Copyright (C) 2018 Risto Nykanen <risto.nykanen@iki.fi>
+
+"""
+
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 import json
 import pickle
 import pandas as pd
 from flask import Flask, request, url_for, jsonify, render_template
 from flask_json import FlaskJSON, JsonError, json_response, as_json
+from calc_dev import calc_dev
 
 app = Flask(__name__)
 app.config['JSON_ADD_STATUS'] = False
@@ -10,23 +34,15 @@ app.config['JSON_ADD_STATUS'] = False
 FlaskJSON(app)
 
 sample = {
-  "crime_rate": 0.1,
-  "avg_number_of_rooms": 4.0,
-  "distance_to_employment_centers": 6.5,
-  "property_tax_rate": 330.0,
-  "pupil_teacher_ratio": 19.5
-},{
-  "crime_rate": 0.2,
-  "avg_number_of_rooms": 5.0,
-  "distance_to_employment_centers": 7.5,
-  "property_tax_rate": 300.0,
-  "pupil_teacher_ratio": 31.5
+  "crime_rate": [0.1],
+  "avg_number_of_rooms": [4.0],
+  "distance_to_employment_centers": [6.5],
+  "property_tax_rate": [330.0],
+  "pupil_teacher_ratio": [19.5]
 }
 
 
-#@app.route('/')
-#def api_root():
-#    return "The service calculates housing price prediction based on area data."
+#    "The service calculates housing price prediction based on area data."
 
 @app.route('/')
 def home():
@@ -50,14 +66,10 @@ def api_predict():
     if request.method == 'GET' and curl_agent:
         return("Usage, e.g: curl http://<server name>/predict -d " + str(sample))
 
-    Housing=pd.read_csv('housing.csv')
     features = ['crime_rate', 'avg_number_of_rooms','distance_to_employment_centers', 'property_tax_rate','pupil_teacher_ratio']
-
-    y = Housing['house_value']
-    X = Housing[features]
-
-    pre_values = pd.DataFrame(X.iloc[0:1])
-#    pre_values = pd.DataFrame(sample[0:1])
+    # Initialize data structure for input values 
+    pre_values = pd.DataFrame(sample)
+    pre_values = pre_values.reindex(columns=features)
 
     if (not curl_agent):
         result=request.form
@@ -66,39 +78,30 @@ def api_predict():
         print(pre_values)    
     else :    
     # Use 'force' to skip mimetype checking to have shorter curl command.
-#    print("Getting json input...")
       try:
           data = request.get_json(force=True)
-          # Use same DF shape
-#          pre_values = pd.DataFrame(sample)
-#          print(pre_values)
           for value in features:
               pre_values[value] = float(data[value])
 
       except (KeyError, TypeError, ValueError):
           raise JsonError(description='Invalid value.')
 
-#    print("Loading model...")
     # Load generated model
     pkl_file = open('reg_model.pkl', 'rb')
     regressor = pickle.load(pkl_file)
     result = (float) (regressor.predict(pre_values))
 
-#    print("Prediction: " + str(result))
-    # Standard deviation of x nearest data points
-#        pkl_file = open('y_values', 'rb')
-#        y = pickle.load(pkl_file)
-#    print(y)
-    find_closest = y.loc[(y-result).abs().argsort()[:20]]
-#    print(find_closest)
-    stddev = find_closest.std()
-#    print("Stddev: " + str(stddev))
+    # Load y-values for Std Dev calculation
+    pkl_file = open('y_values.pkl', 'rb')
+    y = pickle.load(pkl_file)
+
+    # Standard deviation of estimated value, using x nearest data points for inputs
+    stddev = calc_dev(pre_values, 100)
     
     if curl_agent : 
       return json_response(house_value = result, stddev = stddev)
     else :
       return render_template('result.html',house_value = result, stddev = stddev)
-
 
        
 if __name__ == '__main__':
