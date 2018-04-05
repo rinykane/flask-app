@@ -15,8 +15,15 @@ def normalize(x):
     return x, x_norm
 
 def closest_ind(vlist, value, num):
-    closest = vlist.loc[(vlist-value).abs().argsort()[:num]]
-    return closest
+	new = pd.DataFrame()
+	new = vlist
+
+	# subtract values from data
+	new = np.subtract(vlist,value)
+	# sum all parameters together and find closest
+	new['sum'] = new.sum(axis=1)
+	closest = vlist.loc[(new['sum']).abs().argsort()[:num]].index 
+	return closest
 
 def calc_dev(params, num):
 	# Read housing data
@@ -26,17 +33,13 @@ def calc_dev(params, num):
 
 	# Normalize values and store parameters
 	normalized_housing, norm_params = normalize(Housing)
-	# Add sum of normalized parameters
-	normalized_housing['param_sum'] = normalized_housing[features].sum(axis=1)
 	# Ensure that indexing is correct
 	try:
 		params = params.reindex(columns=features)
 	except:
-		print("Invalid parameters: "+ str(params))
 		return 0
 	# Normalize params and calulate sum of parameters
-	norm_params = params/norm_params[0:5]
-	s = (float) (norm_params.sum(axis=1))
-	ind = closest_ind(normalized_housing['param_sum'], s, num)
+	ref_params = params/norm_params[0:5]
+	ind = closest_ind(normalized_housing[features], ref_params, num)
 
-	return(Housing['house_value'][ind.index].std())
+	return(Housing['house_value'][ind].std())

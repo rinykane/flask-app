@@ -96,7 +96,7 @@ def api_predict():
     y = pickle.load(pkl_file)
 
     # Standard deviation of estimated value, using x nearest data points for inputs
-    stddev = calc_dev(pre_values, 100)
+    stddev = calc_dev(pre_values, 20)
     
     if curl_agent : 
       return json_response(house_value = result, stddev = stddev)
